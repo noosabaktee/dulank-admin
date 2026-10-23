@@ -2,7 +2,7 @@ import type { EmployeeSalaryItem, EmployeeSalaryFormData, EmployeeSalaryFilterPa
 
 interface ResponseData {
   success: boolean
-  data: EmployeeSalaryItem[]
+  data: (Omit<EmployeeSalaryItem, 'status'> & { status: 'Active' | 'Inactive' | 'Disabled' })[]
   message?: string
 }
 
@@ -11,12 +11,12 @@ export function useEmployeeSalaries() {
     key: 'employee-salaries-list'
   })
 
-  const salaries = computed<EmployeeSalaryItem[]>(() => data.value?.data ?? [])
+  const salaries = computed<EmployeeSalaryItem[]>(() => (data.value?.data ?? []).map(item => ({ ...item, status: item.status === 'Inactive' ? 'Disabled' : item.status })))
 
   const saveSalary = async (payload: EmployeeSalaryFormData) => {
     const res = await apiFetch<{ success: boolean; data: EmployeeSalaryItem; message?: string }>('/api/v1/admin/employee-salaries', {
       method: 'POST',
-      body: payload
+      body: { ...payload, status: payload.status === 'Disabled' ? 'Inactive' : payload.status }
     })
     await refresh()
     return res

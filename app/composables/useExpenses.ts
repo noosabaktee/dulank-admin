@@ -34,8 +34,9 @@ export function useExpenses(filterParams?: Ref<ExpenseFilterParams> | ExpenseFil
   const expenses = computed<Expense[]>(() => data.value?.data ?? [])
 
   const saveExpense = async (payload: ExpenseFormData) => {
-    const { id, noExpense, ...body } = payload
-    void noExpense
+    const { id, noExpense, status, due, ...fields } = payload
+    void noExpense; void status; void due
+    const body = { ...fields, bankAccountId: payload.bankAccountId || null }
 
     const res = await apiFetch<MutationResponse>(
       id ? `/api/v1/admin/expenses/${encodeURIComponent(id)}` : '/api/v1/admin/expenses',

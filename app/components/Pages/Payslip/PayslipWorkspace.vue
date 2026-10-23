@@ -17,8 +17,20 @@ import DocumentPrintModal from '~/components/Common/DocumentPrintModal.vue'
 const searchQuery = ref('')
 const filterStatus = ref('')
 
-const { payslips, pending, error, refresh, savePayslip, deletePayslip } = usePayslips()
+const { payslips, pending, error, refresh, savePayslip, deletePayslip, payPayslip } = usePayslips()
 const { employees } = useEmployees()
+const { salaries } = useEmployeeSalaries()
+const { accounts } = useBankAccounts()
+const paymentTarget = ref<PayslipItem | null>(null)
+const paymentAccountId = ref('')
+async function confirmPayment() {
+  if (!paymentTarget.value || isBusy.value) return
+  isBusy.value = true
+  try {
+    await payPayslip(paymentTarget.value.slipNo, { method: paymentAccountId.value ? 'Transfer' : 'Cash', bankAccountId: paymentAccountId.value || undefined })
+    paymentTarget.value = null
+  } catch (error: any) { showToast(error?.data?.message || 'Gagal membayar slip gaji') } finally { isBusy.value = false }
+}
 
 // Client-side filtering for 0ms smooth search without skeleton flicker
 const filteredPayslips = computed(() => {
@@ -225,6 +237,7 @@ function handleExportExcel() {
       @update:search-query="searchQuery = $event"
       @update:filter-status="filterStatus = $event"
       @edit="handleEdit"
+      @pay="paymentTarget = $event; paymentAccountId = ''"
       @delete="handleDeleteRequest"
     />
 
@@ -234,6 +247,7 @@ function handleExportExcel() {
       :is-edit="isEditMode"
       :payslip-data="activePayslipForEdit"
       :employees="employees"
+      :salaries="salaries"
       :busy="isBusy"
       @close="isFormModalOpen = false"
       @submit="handleFormSubmit"
@@ -249,6 +263,18 @@ function handleExportExcel() {
       @confirm="confirmDelete"
     />
 
+    <SalesDialog :open="!!paymentTarget" title="Bayar Slip Gaji" medium @close="paymentTarget = null">
+      <form class="space-y-4 p-6" @submit.prevent="confirmPayment">
+        <p>{{ paymentTarget?.name }} ? sisa {{ formatIDR(paymentTarget?.due ?? paymentTarget?.total ?? 0) }}</p>
+        <label class="block text-sm">Rekening pembayaran
+          <select v-model="paymentAccountId" class="mt-2 w-full rounded-lg border border-gray-300 bg-white p-2 dark:bg-gray-900">
+            <option value="">Tunai tanpa rekening</option>
+            <option v-for="account in accounts.filter(item => item.status === 'Active')" :key="account.id" :value="account.id">{{ account.accountName }}</option>
+          </select>
+        </label>
+        <button type="submit" :disabled="isBusy" class="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50">Konfirmasi Pembayaran</button>
+      </form>
+    </SalesDialog>
     <!-- Print & PDF Modal -->
     <DocumentPrintModal
       :open="isPrintModalOpen"

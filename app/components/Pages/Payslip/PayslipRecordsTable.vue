@@ -17,6 +17,7 @@ const emit = defineEmits<{
   'update:filterStatus': [value: string]
   'view': [item: PayslipItem]
   'edit': [item: PayslipItem]
+  'pay': [item: PayslipItem]
   'delete': [item: PayslipItem]
 }>()
 
@@ -144,6 +145,7 @@ function getStatusBadgeClass(status: string) {
 
     <!-- Action -->
     <template #cell(actions)="{ item }">
+      <button v-if="item.status !== 'Paid'" type="button" class="mr-2 text-sm text-emerald-700" @click="emit('pay', item)">Bayar</button>
       <div class="flex items-center justify-center gap-1.5">
         <NuxtLink
           :to="`/payslip-detail?id=${item.id}`"
@@ -155,11 +157,13 @@ function getStatusBadgeClass(status: string) {
         <SalesActionButton
           icon="edit"
           tooltip="Edit Payslip"
+          :disabled="item.status === 'Paid' || (item.paid ?? 0) > 0"
           @click="emit('edit', item)"
         />
         <SalesActionButton
           icon="trash-2"
           tooltip="Delete Payslip"
+          :disabled="item.status === 'Paid' || (item.paid ?? 0) > 0"
           danger
           @click="emit('delete', item)"
         />

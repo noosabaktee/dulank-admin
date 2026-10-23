@@ -1,8 +1,38 @@
 ---
 title: Documentation Changelog
 tags: [changelog]
-updated: 2026-10-21
+updated: 2026-10-23
 ---
+
+## 2026-10-23
+
+### Revisi Cash Advance PUT, outstanding dan pembayaran Expense
+
+- Pemeriksaan akhir: full backend PASS 263 tes/3.253 assertions, target backend final 23 tes/265 assertions, 16 Node tests PASS; Nuxt typecheck/build/structure PASS (1.220 original, 0 failure, hashesChecked=false), Pint/diff check PASS. Penyaluran/angsuran kasbon memakai tanggal transaksi pada jurnal; koreksi memakai tanggal koreksi.
+
+- Fix 405: route PUT cash-advances/{id} + controller update transaksi/lock. Form menampilkan karyawan/tenor/periode/tanggal/rekening, paid/outstanding read-only. Koreksi pokok/rekening sebelum angsuran memakai jurnal pembalik; setelah pembayaran keduanya terkunci. Detail menyediakan pencatatan angsuran aktual dan refresh data/rekening. Riwayat angsuran tidak lagi ditampilkan sebagai penyaluran pokok.
+- Expense paid kumulatif kini tersimpan melalui tambahan pembayaran sebesar selisih, bukan overwrite jumlah historis. Paid/due/status/jurnal berasal dari PaymentService; penurunan dan lebih bayar ditolak, rekening setelah pembayaran dikunci. Form memakai CurrencyInput dan helper yang menjelaskan semantik kumulatif. Payload tidak mengirim due/status dan rekening kosong menjadi null.
+- Architecture: halaman -> workspace -> form/detail/table -> domain manager/composable -> apiFetch/proxy -> Laravel FormRequest/controller -> service/model. UI memakai props/emits dan reusable SalesDialog/CurrencyInput/Display/feedback; tidak ada HTTP dalam UI. Tidak mengklaim seluruh workspace existing telah direstrukturisasi. Partial BRVS; browser verification pending.
+- Route:list PUT aktif; browser apps=[]/browsers=[], legacy source tidak tersedia untuk perbandingan visual. Tidak melakukan migration/seeding/live DB write; toast hijau tetap.
+- Root DONE/TO-DO, PRD, handover dan status matrix disinkronkan. Koreksi/pembatalan pembayaran existing tetap TODO. Rama; NOT COMMITTED / NOT PUSHED.
+
+
+### Tahap 11/12/14, bagian operasional nonproduk
+
+- Payroll: payload ID/master dan hitungan server Monthly/Weekly/Daily, detail aktual, snapshot sistem, duplikat/negative guard, draft edit/delete dan partial pay. Finance backend: koreksi income/ledger, batas bayar expense/cash advance, row lock dan proteksi hapus. Tidak mengubah katalog/order/insentif produksi atau memperbaiki data historis secara diam-diam.
+- Konten: filter status Blog, transaksi post/tag, guard kategori Blog/FAQ, Download FormData byte asli/PUT/favorite dan validasi upload, Support Ticket payload/deskripsi/balasan/histori dengan actor autentikasi. Gaya toast hijau dipertahankan. Upload satu berkas per submit; metadata download tanpa berkas menampilkan unavailable, bukan unduhan sukses.
+- OperationsAndContentSeeder standalone local/testing menambah data kantor/payroll dan konten/bantuan umum dengan nama alami; provenance/idempotensi/preserve edits/rollback diuji. Tanpa produk, payment, ledger atau email. Migration metadata download + salary_system payslip dan seeder belum dijalankan ke DB kerja. Command dulank:check-operations tersedia read-only dengan output redacted dan gate terbatas.
+- Architecture: page -> komponen form/tabel/detail -> composable -> apiFetch -> Laravel/Eloquent/service. Tidak memindahkan HTTP ke UI atau mengklaim dekomposisi penuh seluruh workspace. Partial BRVS, implemented/API-tested; browser verification pending.
+- Validasi: full Pest 251 tes/2.747 assertions PASS, Pint PASS; 12 Node tests PASS (operational flows + feedback), Nuxt typecheck/build PASS, structure PASS (1.220 original, 0 failure, hashesChecked=false). Browser apps=[]/browsers=[]; sumber HTML/legacy tidak tersedia untuk perbandingan baru. UAT, restore deployment, external services dan security/branch audit menyeluruh tetap gate.
+- Root DONE bagian 10 dan TO-DO, backend PRD, handover serta status matrix disinkronkan; tahap 11/12/14 belum ditandai seluruhnya selesai. Rama; NOT COMMITTED / NOT PUSHED.
+
+## 2026-10-22
+
+### Penamaan dataset fondasi lebih natural
+
+- FoundationStagesOneToFiveSeeder menghapus suffix Contoh/Contoh Tahap 1-5 dan merapikan nama orang/usaha/cabang/kas/alamat/deskripsi. Identitas provenance/kode/email teknis, status nonaktif, password acak dan relasi tetap sama. Nilai pajak tetap nonaktif dan sintetis.
+- Hanya source seeder: tidak melakukan live DB update atau menjalankan seed ulang. Record existing tetap dipertahankan saat rerun; perubahan label baru tidak otomatis memperbarui data lama. DONE.md/PRD disinkronkan. Status UI/arsitektur tetap.
+- Validasi: 6 tes seeder / 222 assertions PASS pada SQLite terisolasi; Pint dan diff check PASS. Build/typecheck/browser tidak diulang karena tidak ada source frontend berubah. Rama; NOT COMMITTED / NOT PUSHED.
 
 ## 2026-10-21
 
@@ -1220,3 +1250,12 @@ Pest backend penuh PASS: 189 tes / 2.014 assertion. Pint PASS, Nuxt production b
 ### Penghapusan data contoh atas permintaan pengguna ? 20 Oktober 2026
 
 175 record yang dibuat DemoMasterDataSeeder dan 175 pemetaan source=demo telah dihapus dari database lokal dalam satu transaksi. Snapshot sebelum penghapusan disimpan di storage/app/private/backups/before-remove-demo-20261020-203138.snapshot. Perbandingan hash seluruh 133 tabel membuktikan record selain target demo tidak berubah; sisa pemetaan demo nol. Master yang sudah ada sebelum seeder tetap dipertahankan. File seeder, migration product_type, dan implementasi kontrak tetap tersedia. Catatan seed sebelumnya adalah riwayat, bukan keadaan database saat ini. Tidak menjalankan ulang seeder. Branch Rama; NOT COMMITTED / NOT PUSHED. Validasi: integritas row sebelum/sesudah penghapusan, bukan perubahan kode; build/tes tidak diulang.
+
+
+### Pembaruan label seeder lama - 22 Oktober 2026
+
+Command `php artisan dulank:normalize-seed-labels` menampilkan jumlah perubahan tanpa menulis. Tambahkan `--apply` untuk memperbarui label lama yang cocok persis pada record dengan provenance FoundationStagesOneToFiveSeeder. Edit pengguna dan record di luar provenance tersebut dipertahankan; produk, status, password, saldo, relasi dan timestamp tidak diubah. Backup JSON nilai sebelum/sesudah wajib berhasil sebelum penulisan database; perubahan database dalam transaksi. Command hanya local/testing dan aman dijalankan ulang.
+
+Dijalankan pada database lokal: 37 record diperbarui; pemeriksaan ulang menemukan 0 perubahan tersisa. Backup privat: `dulank-backend/storage/app/private/backups/seed-labels-20261022-105306-a916997b-125a-4656-a303-bfaf1833d3c7.json`. Tidak menjalankan ulang seeder atau menghapus record. Preferensi penamaan alami untuk seeder berikutnya dicatat di AGENTS.md backend.
+
+Validasi: 9 tes / 246 assertions PASS (command dan seeder), Pint PASS. Frontend/build/browser tidak dijalankan karena tidak ada perubahan UI. Branch Rama; NOT COMMITTED / NOT PUSHED.

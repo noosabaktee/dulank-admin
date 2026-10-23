@@ -1,5 +1,11 @@
 # PANDUAN SERAH TERIMA AI (AI HANDOVER & ONBOARDING GUIDE)
 
+
+> **Revisi Cash Advance/Expense 2026-10-23:** route PUT kasbon tersedia; form tenor/rekening dan outstanding read-only; angsuran dapat dicatat lewat Detail. Total/rekening terkunci setelah pembayaran. Expense paid adalah total kumulatif; kenaikan mencatat delta PaymentService+jurnal, submit ulang tidak menggandakan, penurunan/lebih bayar ditolak. Tidak ada migration/seeding/live DB write. Evidence di [DONE bagian 12](../DONE.md), gate di [TO-DO](../TO-DO.md) dan [changelog](docs/obsidian-vault/09-CHANGELOG.md). Browser inventory kosong; partial BRVS/implemented/API-tested, browser verification pending. Rama; NOT COMMITTED / NOT PUSHED.
+
+
+> **Operasional nonproduk 2026-10-23:** tahap 11/12/14 dikerjakan sebagian: payroll memakai master/ID dan hitungan server, detail aktual + pembayaran parsial; guard jurnal income/expense/cash advance; Blog/FAQ referensi kategori; Download Files upload byte asli/PUT/favorite; Support Ticket deskripsi/balasan/histori persisten. Seeder OperationsAndContentSeeder tidak menyentuh produk/payment/ledger, hanya local/testing. Dua migration backend dan seeder belum dijalankan pada DB kerja. Backend 251 tes/2.747 assertions, 12 Node tests, typecheck/build/structure PASS; browser inventory kosong dan source legacy tidak tersedia untuk perbandingan baru. Partial BRVS / implemented/API-tested, browser verification pending. Cakupan, perintah dan batas: [DONE bagian 10](../DONE.md); pekerjaan tersisa: [TO-DO](../TO-DO.md). Jangan menganggap seluruh tahap atau website production-ready. Rama; NOT COMMITTED / NOT PUSHED.
+
 > **Pilihan visual toast 2026-10-21:** pengguna meminta gaya toast lama kembali: sukses bg-emerald-600 dengan teks/ikon putih, bentuk compact rounded-lg di kanan atas. ActionToastHost sudah disesuaikan; error rose dan info blue. Pertahankan pilihan ini saat revisi selanjutnya. Alur notifikasi tetap global. Kompilasi template/diff PASS; browser belum diverifikasi. Rama; NOT COMMITTED / NOT PUSHED.
 
 

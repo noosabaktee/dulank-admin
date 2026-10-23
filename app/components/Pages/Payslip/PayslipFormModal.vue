@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PayslipItem, PayslipFormData } from '#server/types/payslip'
+import type { EmployeeSalaryItem } from '#server/types/employeeSalary'
 import type { EmployeeItem } from '#server/types/employee'
 import SalesDialog from '~/components/Sales/SalesDialog.vue'
 import CurrencyInput from '~/components/Common/CurrencyInput.vue'
@@ -16,6 +17,7 @@ const props = defineProps<{
   isEdit: boolean
   payslipData: PayslipItem | null
   employees: EmployeeItem[]
+  salaries?: EmployeeSalaryItem[]
   busy?: boolean
 }>()
 
@@ -24,74 +26,35 @@ const emit = defineEmits<{
   submit: [formData: PayslipFormData]
 }>()
 
-const statusOptions = ['Paid', 'Unpaid']
-
-const form = ref<PayslipFormData>({
-  slipNo: '',
-  name: '',
-  period: '02/02/26 - 07/02/26',
-  salaryRate: 150000,
-  dayWorked: 6,
-  allowance: 300000,
-  overtime: 0,
-  deduction: 0,
-  status: 'Paid',
-  paidDate: '09/02/2026',
-})
-
+const statusOptions = ['Unpaid']
+const blankForm = (): PayslipFormData => ({ employeeId: '', name: '', period: new Date().toISOString().slice(0, 7), salaryRate: 0, dayWorked: 26, allowance: 0, overtime: 0, deduction: 0, status: 'Unpaid', paidDate: '' })
+const form = ref<PayslipFormData>(blankForm())
 const errorMessage = ref('')
-
-watch(
-  () => props.payslipData,
-  (val) => {
-    if (val && props.isEdit) {
-      form.value = {
-        id: val.id,
-        slipNo: val.slipNo,
-        name: val.name,
-        period: val.period,
-        salaryRate: val.salaryRate,
-        dayWorked: val.dayWorked,
-        allowance: val.allowance,
-        overtime: val.overtime,
-        deduction: val.deduction,
-        status: val.status,
-        paidDate: val.paidDate,
-      }
-    } else {
-      const defaultEmp = props.employees[0]
-      form.value = {
-        slipNo: `PS${String(Date.now()).slice(-6)}`,
-        name: defaultEmp?.name || '',
-        period: '02/02/26 - 07/02/26',
-        salaryRate: 150000,
-        dayWorked: 6,
-        allowance: 300000,
-        overtime: 0,
-        deduction: 0,
-        status: 'Unpaid',
-        paidDate: '-',
-      }
-    }
-    errorMessage.value = ''
-  },
-  { immediate: true }
-)
-
+watch(() => [props.open, props.payslipData] as const, () => {
+  if (!props.open) return
+  form.value = props.isEdit && props.payslipData ? { ...props.payslipData, paidDate: props.payslipData.paidDate ?? '' } : blankForm()
+  errorMessage.value = ''
+}, { immediate: true })
+const selectedSalary = computed(() => props.salaries?.find(item => item.employeeId === form.value.employeeId && item.status === 'Active'))
 const calculatedTotal = computed(() => {
-  const base = (Number(form.value.salaryRate) || 0) * (Number(form.value.dayWorked) || 0)
-  const earnings = base + (Number(form.value.allowance) || 0) + (Number(form.value.overtime) || 0)
-  return Math.max(0, earnings - (Number(form.value.deduction) || 0))
+  const salary = selectedSalary.value
+  const base = salary?.system === 'Daily' ? Number(salary.salary) * Number(form.value.dayWorked) : Number(salary?.salary ?? form.value.salaryRate)
+  return Math.max(0, Math.round(base) + Number(salary?.allowanceTotal ?? form.value.allowance) + Number(form.value.overtime) - Number(form.value.deduction))
 })
-
-function onEmployeeChange(e: Event) {
-  const name = (e.target as HTMLSelectElement).value
-  form.value.name = name
+function onEmployeeChange(event: Event) {
+  const id = (event.target as HTMLSelectElement).value
+  form.value.employeeId = id
+  form.value.name = props.employees.find(item => item.id === id)?.name ?? ''
+  const salary = props.salaries?.find(item => item.employeeId === id && item.status === 'Active')
+  form.value.period = salary?.system === 'Weekly' ? '' : new Date().toISOString().slice(0, 7)
+  form.value.dayWorked = salary?.system === 'Weekly' ? 6 : 26
+  form.value.salaryRate = salary?.salary ?? 0
+  form.value.allowance = salary?.allowanceTotal ?? 0
 }
 
 function handleSubmit() {
-  if (!form.value.name) {
-    errorMessage.value = 'Employee name is required'
+  if (!form.value.employeeId || !selectedSalary.value) {
+    errorMessage.value = 'Pilih karyawan dengan pengaturan gaji aktif.'
     return
   }
   if (!form.value.period) {
@@ -127,9 +90,9 @@ function handleSubmit() {
         <div :class="modalFormInputColClass">
           <input
             v-model="form.slipNo"
+            disabled
             type="text"
-            required
-            placeholder="PS000001"
+            placeholder="Auto Generated"
             :class="formControlClass"
           >
         </div>
@@ -142,12 +105,12 @@ function handleSubmit() {
         </label>
         <div :class="modalFormInputColClass">
           <select
-            :value="form.name"
+            :value="form.employeeId"
             :class="formControlClass"
             @change="onEmployeeChange"
           >
             <option value="" disabled>Choose Employee</option>
-            <option v-for="emp in employees" :key="emp.id" :value="emp.name">
+            <option v-for="emp in employees" :key="emp.id" :value="emp.id">
               {{ emp.id }} - {{ emp.name }} ({{ emp.department }})
             </option>
           </select>
@@ -162,7 +125,7 @@ function handleSubmit() {
         <div :class="modalFormInputColClass">
           <input
             v-model="form.period"
-            type="text"
+            :type="selectedSalary?.system === 'Weekly' ? 'week' : 'month'"
             placeholder="dd/mm/yy - dd/mm/yy"
             :class="formControlClass"
           >
@@ -177,6 +140,7 @@ function handleSubmit() {
         <div :class="modalFormInputColClass">
           <CurrencyInput
             v-model="form.salaryRate"
+            :disabled="true"
             align="right"
             :class="formControlClass"
             placeholder="0"
@@ -191,10 +155,10 @@ function handleSubmit() {
         </label>
         <div :class="modalFormInputColClass">
           <input
-            v-model="form.dayWorked"
+            v-model.number="form.dayWorked"
             type="number"
             min="0"
-            max="31"
+            :max="selectedSalary?.system === 'Weekly' ? 7 : 31"
             :class="formControlClass"
           >
         </div>
@@ -208,6 +172,7 @@ function handleSubmit() {
         <div :class="modalFormInputColClass">
           <CurrencyInput
             v-model="form.allowance"
+            :disabled="true"
             align="right"
             :class="formControlClass"
             placeholder="0"
@@ -251,7 +216,7 @@ function handleSubmit() {
           Status
         </label>
         <div :class="modalFormInputColClass">
-          <select v-model="form.status" :class="formControlClass">
+          <select v-model="form.status" disabled :class="formControlClass">
             <option v-for="st in statusOptions" :key="st" :value="st">
               {{ st }}
             </option>
@@ -266,7 +231,7 @@ function handleSubmit() {
         </label>
         <div :class="modalFormInputColClass">
           <input
-            v-model="form.paidDate"
+            v-model="form.paidDate" disabled
             type="text"
             placeholder="dd/mm/yyyy or -"
             :class="formControlClass"
@@ -281,7 +246,7 @@ function handleSubmit() {
             <span class="text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
               Total Net Salary (Gaji Bersih)
             </span>
-            <p class="text-[11px] text-gray-500">
+            <p class="text-xs text-gray-500">
               (Rate × Hari Kerja) + Tunjangan + Lembur - Potongan
             </p>
           </div>

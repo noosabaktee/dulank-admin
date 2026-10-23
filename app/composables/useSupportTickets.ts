@@ -38,9 +38,9 @@ export function useSupportTickets(filterParams?: Ref<SupportTicketFilterQuery> |
   const createTicket = async (payload: SupportTicketCommand) => {
     const res = await apiFetch<{ success: boolean; data: SupportTicket; message?: string }>('/api/v1/admin/webstore/support-tickets', {
       method: 'POST',
-      body: payload
+      body: { subject: payload.descriptions.trim().slice(0, 120), requestedBy: payload.customerName, customerEmail: payload.email, customerPhone: payload.phone, description: payload.descriptions }
     })
-    await refresh()
+    await Promise.all([refresh(), refreshStats()])
     return res
   }
 
@@ -49,7 +49,7 @@ export function useSupportTickets(filterParams?: Ref<SupportTicketFilterQuery> |
       method: 'PUT',
       body: payload
     })
-    await refresh()
+    await Promise.all([refresh(), refreshStats()])
     return res
   }
 
@@ -57,7 +57,7 @@ export function useSupportTickets(filterParams?: Ref<SupportTicketFilterQuery> |
     const res = await apiFetch<{ success: boolean; message?: string }>(`/api/v1/admin/webstore/support-tickets/${encodeURIComponent(id)}`, {
       method: 'DELETE'
     })
-    await refresh()
+    await Promise.all([refresh(), refreshStats()])
     return res
   }
 

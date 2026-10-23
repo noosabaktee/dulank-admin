@@ -12,10 +12,11 @@ export interface CashAdvanceHistoryEntry {
 }
 
 export interface CashAdvancePayment {
-  id: string
+  id?: string
   date: string
   amount: number
   referenceId?: string
+  note?: string
 }
 
 export interface CashAdvance {
@@ -45,6 +46,9 @@ export interface CashAdvanceView extends CashAdvance {
 export interface CashAdvanceFormData {
   id?: string
   employeeId: string
+  employeeName?: string
+  bankAccountId?: string | null
+  installmentCount?: number
   date: string
   totalCash: number
   period: CashAdvancePeriod

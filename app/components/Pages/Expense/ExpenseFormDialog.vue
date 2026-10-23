@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CurrencyInput from '~/components/Common/CurrencyInput.vue'
 import type { Expense, ExpenseFormData } from '#server/types/expense'
 import { formControlClass, modalFormInputColClass, modalFormLabelClass, modalFormRowClass, salesPrimaryButton, salesSecondaryButton } from '~/utils/salesUi'
 
@@ -64,6 +65,8 @@ watch(
 function submit() {
   if (!form.name.trim()) return void (errorMessage.value = 'Nama pengeluaran wajib diisi')
   if (!form.amount || form.amount <= 0) return void (errorMessage.value = 'Nominal wajib lebih dari 0')
+  if (form.paid < (props.item?.paid ?? 0)) return void (errorMessage.value = 'Total sudah dibayar tidak boleh dikurangi dari pembayaran tercatat.')
+  if (form.paid > form.amount) return void (errorMessage.value = 'Total sudah dibayar tidak boleh melebihi nominal pengeluaran.')
   errorMessage.value = ''
   emit('submit', {
     ...form,
@@ -101,12 +104,12 @@ function submit() {
 
       <div :class="modalFormRowClass">
         <label :class="modalFormLabelClass">Nominal (Rp)<span class="ml-1 text-rose-600">*</span></label>
-        <div :class="modalFormInputColClass"><input v-model.number="form.amount" :class="formControlClass" type="number" min="1" required /></div>
+        <div :class="modalFormInputColClass"><CurrencyInput v-model="form.amount" prefix="Rp" :min="1" required :disabled="busy" /></div>
       </div>
 
       <div :class="modalFormRowClass">
         <label :class="modalFormLabelClass">Sudah Dibayar (Rp)</label>
-        <div :class="modalFormInputColClass"><input v-model.number="form.paid" :class="formControlClass" type="number" min="0" /></div>
+        <div :class="modalFormInputColClass"><CurrencyInput v-model="form.paid" prefix="Rp" :min="item?.paid ?? 0" :max="form.amount" :disabled="busy" /><p class="mt-1 text-xs text-gray-500">Total kumulatif. Kenaikan dicatat sebagai pembayaran tambahan; pembayaran lama tidak dapat dikurangi di sini.</p></div>
       </div>
 
       <div :class="modalFormRowClass">
@@ -121,8 +124,9 @@ function submit() {
       <div :class="modalFormRowClass">
         <label :class="modalFormLabelClass">Rekening Bank</label>
         <div :class="modalFormInputColClass">
-          <select v-model="form.bankAccountId" :class="formControlClass">
+          <select v-model="form.bankAccountId" :class="formControlClass" :disabled="busy || (item?.paid ?? 0) > 0">
             <option value="">Tanpa Rekening</option>
+            <option v-if="item?.bankAccountId && !bankAccounts.some(account => account.value === item?.bankAccountId)" :value="item.bankAccountId">{{ item.bankAccount || `Rekening #${item.bankAccountId}` }}</option>
             <option v-for="account in bankAccounts" :key="account.value" :value="account.value">{{ account.label }}</option>
           </select>
         </div>

@@ -20,7 +20,7 @@ const columns = [
     <template #cell-totalCash="{ item }"><CurrencyDisplay :value="item.totalCash" bold /></template>
     <template #cell-outstanding="{ item }"><CurrencyDisplay :value="item.outstanding" bold /></template>
     <template #cell-status="{ item }"><SalesStatusBadge :status="item.status === 'On' ? 'Active' : 'Closed'" /></template>
-    <template #cell-actions="{ item }"><div class="inline-flex gap-1.5"><SalesActionButton action="view" label="View Cash Advance" @click="emit('view', item)" /><SalesActionButton action="edit" label="Edit Cash Advance" @click="emit('edit', item)" /><SalesActionButton action="delete" label="Delete Cash Advance" :disabled="item.payments.length > 0" @click="emit('delete', item)" /></div></template>
+    <template #cell-actions="{ item }"><div class="inline-flex gap-1.5"><SalesActionButton action="view" label="View Cash Advance" @click="emit('view', item)" /><SalesActionButton action="edit" label="Edit Cash Advance" @click="emit('edit', item)" /><SalesActionButton action="delete" label="Delete Cash Advance" :disabled="item.payments.length > 0 || !!item.bankAccountId" @click="emit('delete', item)" /></div></template>
   </SalesDataTable>
 </template>
 

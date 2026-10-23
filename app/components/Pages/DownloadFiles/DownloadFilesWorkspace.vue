@@ -157,9 +157,9 @@ async function handleToggleFavorite(item: DownloadFileItem) {
 
 function handleDownload(item: DownloadFileItem) {
   if (item.fileUrl) {
-    window.open(item.fileUrl, '_blank')
+    window.open(item.fileUrl, '_blank', 'noopener,noreferrer')
   } else {
-    showToast(`Mengunduh ${item.name}...`)
+    showToast('Gagal mengunduh: berkas belum tersedia. Unggah berkas terlebih dahulu.')
   }
 }
 </script>

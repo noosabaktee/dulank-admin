@@ -50,7 +50,7 @@ watch(
         deduction: val.deduction,
         total: val.total,
         status: val.status,
-        paidDate: val.paidDate
+        paidDate: val.paidDate ?? ''
       }
     } else {
       const now = new Date()

@@ -34,7 +34,7 @@ export function useBlogs(filterParams?: Ref<{ search?: string; status?: string }
 
   const query = computed(() => ({
     search: params.value.search || undefined,
-    status: params.value.status || undefined,
+    status: normalizeStatus(params.value.status) || undefined,
     limit: 100
   }))
 

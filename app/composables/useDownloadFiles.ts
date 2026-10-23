@@ -24,14 +24,18 @@ export function useDownloadFiles() {
   const files = computed<DownloadFileItem[]>(() => data.value?.data ?? [])
 
   const saveFile = async (payload: DownloadFileFormData & { isFavorite?: boolean; isPinned?: boolean }) => {
-    const { id, isFavorite, isPinned, ...body } = payload
-    void id
-    void isFavorite
-    void isPinned
-
-    const res = await apiFetch<MutationResponse>('/api/v1/admin/download-files', {
-      method: 'POST',
-      body
+    const { id, file, ...values } = payload
+    let body: FormData | typeof values = values
+    if (file) {
+      const multipart = new FormData()
+      for (const [key, value] of Object.entries(values)) {
+        if (value !== undefined && value !== null && value !== '') multipart.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value))
+      }
+      multipart.append('file', file)
+      body = multipart
+    }
+    const res = await apiFetch<MutationResponse>(id ? `/api/v1/admin/download-files/${encodeURIComponent(id)}` : '/api/v1/admin/download-files', {
+      method: id ? 'PUT' : 'POST', body
     })
 
     await refresh()
@@ -49,10 +53,7 @@ export function useDownloadFiles() {
   }
 
   const toggleFavorite = async (item: DownloadFileItem) => {
-    const idx = files.value.findIndex(entry => entry.id === item.id)
-    if (idx === -1) return
-
-    files.value[idx] = { ...files.value[idx]!, isFavorite: !item.isFavorite }
+    await saveFile({ id: item.id, name: item.name, category: item.category, isFavorite: !item.isFavorite })
   }
 
   return {

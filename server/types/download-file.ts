@@ -17,6 +17,9 @@ export interface DownloadFileItem {
 }
 
 export interface DownloadFileFormData {
+  file?: File
+  isFavorite?: boolean
+  isPinned?: boolean
   id?: string
   name: string
   category: string
