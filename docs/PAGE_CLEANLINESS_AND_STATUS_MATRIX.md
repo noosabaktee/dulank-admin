@@ -1,5 +1,24 @@
 # PANDUAN PAGE BERSIH, PETA KOMPONEN & MASTER STATUS MATRIX
 
+
+### Revisi terbatas Cash Advance / Expense - 23 Oktober 2026
+
+`/cash-advance`: PUT, tenor/rekening, outstanding read-only, detail/angsuran aktual dan refresh manager. `/expenses`: total paid kumulatif -> tambahan payment/jurnal sebesar delta; penurunan/lebih bayar ditolak. UI form/detail berkomunikasi melalui props/emits -> manager/composable -> API Laravel; hitungan final/locking berada di backend. Status implemented/API-tested, partial BRVS, browser verification pending; tidak menaikkan seluruh menu menjadi approved baseline. Source legacy tidak tersedia, browser inventory kosong. Rincian validasi dan batas pada [DONE bagian 12](../../DONE.md) dan [changelog](obsidian-vault/09-CHANGELOG.md). Rama; NOT COMMITTED / NOT PUSHED.
+
+
+## Pembaruan terbatas 23 Oktober 2026 - Operasional nonproduk
+
+| Modul/halaman | Evidence sesi ini | Status |
+| --- | --- | --- |
+| Employee Salary / Payslip / Payslip Detail | Master gaji/status, employee ID, kalkulasi server dan snapshot periode/sistem, detail database, pembayaran parsial, guard edit/hapus; Pest + contract tests | Implemented/API-tested; browser verification pending |
+| Income / Expense / Cash Advance | Transaksi/lock, batas due, proteksi hapus, koreksi jurnal income dan jurnal cash advance | API-tested; rekonsiliasi historis/browser pending |
+| Blog/category/tag/comment / FAQ | Filter status, transaksi tag, proteksi kategori terpakai dan dataset konten umum | Targeted API/contract-tested; audit seluruh UI pending |
+| Download Files | FormData byte aktual, PUT, favorite persisten, allowlist/limit upload; satu berkas per submit | Implemented/API-tested; browser/ownership/download counter pending |
+| Support Ticket / Contact | Pemetaan form, deskripsi, balasan/actor/histori persisten; dataset kontak/tiket | API/contract-tested; browser/customer-side flow pending |
+| Banner / Client | Dataset nonaktif untuk review, tanpa aset/endorsement palsu | Seed-tested; kelengkapan publikasi/UI pending |
+
+Page tetap mendelegasikan ke komponen/composable -> apiFetch -> Laravel. Tidak mengklaim pemecahan seluruh workspace existing atau approved BRVS baseline. Typecheck/build/structure dan 12 Node tests PASS, backend 251 tes/2.747 assertions PASS; browser apps=[]/browsers=[]. Structure validator hashesChecked=false, sumber HTML/legacy tidak tersedia untuk perbandingan baru. Seeder/migration baru belum diterapkan pada DB kerja; partial tahap 11/12/14, bukan seluruh website selesai. Detail cakupan dan gate: [DONE](../../DONE.md) bagian 10, [TO-DO](../../TO-DO.md), [changelog](obsidian-vault/09-CHANGELOG.md). Rama; NOT COMMITTED / NOT PUSHED.
+
 > **Update UI 2026-10-21:** notifikasi CRUD memakai ActionToastHost global + apiFetch response/bridge ActionToast (41 blok/37 komponen); PhotoField mengikuti Employee; MemberPicker satu input chip/live search; kedua halaman partner menormalkan metrics null/Count field dan filter jenis. 7 Node tests + 3 API tests/17 assertions, kompilasi 830 template, build/typecheck/structure PASS. Browser belum tersedia; partial BRVS, browser verification pending. Evidence [changelog](obsidian-vault/09-CHANGELOG.md); gate tetap di TO-DO.md root. Tidak ada migration/seeding/data produk berubah. Rama; NOT COMMITTED / NOT PUSHED.
 
 

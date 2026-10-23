@@ -7,45 +7,22 @@ const printPayslip = () => {
   }
 };
 
-const payslip = reactive({
-  slipNo: "PS000001",
-  period: "01/12/2025 - 07/12/2025",
-  company: {
-    name: "PT. Dulank Semesta Cida",
-    address1: "Jl. Arif rahman Hakim Kel. Nagasari",
-    address2: "Karawang Barat - Karawang",
-  },
-  employee: {
-    name: "Budi Setiadi",
-    department: "Produksi",
-    salary: 150000,
-    system: "Daily",
-    workedDays: 6,
-    absentDays: 0,
-  },
-  earnings: [
-    { label: "Regular Over Time", amount: 150000 },
-    { label: "Special Over Time", amount: 0 },
-    { label: "Present Incentive", amount: 300000 },
-    { label: "Pengiriman", amount: 0 },
-  ],
-  deductions: [
-    { label: "Cash Advance", amount: 300000 },
-    { label: "Other Deduction", amount: 0 },
-  ],
-});
-
-const totalEarnings = computed(() => payslip.earnings.reduce((sum, item) => sum + item.amount, 0));
-
-const totalDeductions = computed(() => payslip.deductions.reduce((sum, item) => sum + item.amount, 0));
-
-// In daily system: base pay = salary * workedDays + totalEarnings - totalDeductions
-const basePay = computed(() => payslip.employee.salary * payslip.employee.workedDays);
-const netSalary = computed(() => basePay.value + totalEarnings.value - totalDeductions.value);
+const { record, pending, error, refresh } = usePayslipDetail()
+const payslip = computed(() => ({
+  slipNo: record.value?.slipNo ?? '', period: record.value?.period ?? '',
+  employee: { name: record.value?.name ?? '', department: record.value?.department ?? '', salary: record.value?.salaryRate ?? 0, system: record.value?.salarySystem ?? '?', workedDays: record.value?.dayWorked ?? 0, absentDays: '?' },
+  earnings: (record.value?.items ?? []).filter(item => item.amount >= 0 && item.label !== 'Basic Salary'),
+  deductions: (record.value?.items ?? []).filter(item => item.amount < 0).map(item => ({ ...item, amount: -item.amount })),
+}))
+const basePay = computed(() => record.value?.items?.find(item => item.label === 'Basic Salary')?.amount ?? 0)
+const totalEarnings = computed(() => payslip.value.earnings.reduce((total, item) => total + item.amount, 0))
+const totalDeductions = computed(() => payslip.value.deductions.reduce((total, item) => total + item.amount, 0))
+const netSalary = computed(() => record.value?.total ?? 0)
 </script>
 
 <template>
   <div class="space-y-6">
+    <SalesFeedback :pending="pending" :error="error?.message || ''" @retry="refresh" />
     <!-- Non-print Page Actions Bar -->
     <div class="flex items-center justify-between print:hidden">
       <div class="flex items-center gap-3">
@@ -63,6 +40,7 @@ const netSalary = computed(() => basePay.value + totalEarnings.value - totalDedu
         <button
           type="button"
           class="inline-flex h-9 items-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+          :disabled="!record || pending || !!error"
           @click="printPayslip"
         >
           <FeatherIcon name="download" size="14" />
@@ -71,6 +49,7 @@ const netSalary = computed(() => basePay.value + totalEarnings.value - totalDedu
         <button
           type="button"
           class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white shadow-sm hover:bg-primary-600"
+          :disabled="!record || pending || !!error"
           @click="printPayslip"
         >
           <FeatherIcon name="printer" size="14" />
@@ -81,6 +60,7 @@ const netSalary = computed(() => basePay.value + totalEarnings.value - totalDedu
 
     <!-- Printable Payslip A4 Sheet -->
     <div
+      v-if="record && !pending && !error"
       id="pay-slip"
       class="mx-auto max-w-4xl rounded-xl border border-gray-200 bg-white p-8 shadow-sm print:m-0 print:max-w-none print:border-none print:p-0 print:shadow-none dark:border-gray-800 dark:bg-gray-900"
     >
@@ -93,9 +73,9 @@ const netSalary = computed(() => basePay.value + totalEarnings.value - totalDedu
             Logo
           </div>
           <div>
-            <h5 class="text-base font-bold text-gray-900 dark:text-gray-100">{{ payslip.company.name }}</h5>
-            <p class="text-xs text-gray-600 dark:text-gray-400">{{ payslip.company.address1 }}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">{{ payslip.company.address2 }}</p>
+            <h5 class="text-base font-bold text-gray-900 dark:text-gray-100">PT. Dulank Semesta Cida</h5>
+            <p class="text-xs text-gray-600 dark:text-gray-400"></p>
+            <p class="text-xs text-gray-600 dark:text-gray-400"></p>
           </div>
         </div>
 
@@ -159,47 +139,11 @@ const netSalary = computed(() => basePay.value + totalEarnings.value - totalDedu
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-            <tr>
-              <td class="py-2 text-gray-700 dark:text-gray-300">Basic Salary ({{ payslip.employee.workedDays }} Days)</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">{{ formatRupiah(basePay) }}</td>
-              <td class="ps-6 py-2 text-gray-700 dark:text-gray-300">Cash Advance</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.deductions[0]?.amount || 0) }}
-              </td>
-            </tr>
-            <tr>
-              <td class="py-2 text-gray-700 dark:text-gray-300">{{ payslip.earnings[0]?.label }}</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.earnings[0]?.amount || 0) }}
-              </td>
-              <td class="ps-6 py-2 text-gray-700 dark:text-gray-300">{{ payslip.deductions[1]?.label }}</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.deductions[1]?.amount || 0) }}
-              </td>
-            </tr>
-            <tr>
-              <td class="py-2 text-gray-700 dark:text-gray-300">{{ payslip.earnings[1]?.label }}</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.earnings[1]?.amount || 0) }}
-              </td>
-              <td class="ps-6 py-2"></td>
-              <td class="py-2 text-end"></td>
-            </tr>
-            <tr>
-              <td class="py-2 text-gray-700 dark:text-gray-300">{{ payslip.earnings[2]?.label }}</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.earnings[2]?.amount || 0) }}
-              </td>
-              <td class="ps-6 py-2"></td>
-              <td class="py-2 text-end"></td>
-            </tr>
-            <tr>
-              <td class="py-2 text-gray-700 dark:text-gray-300">{{ payslip.earnings[3]?.label }}</td>
-              <td class="py-2 text-end font-mono text-gray-900 dark:text-gray-100">
-                {{ formatRupiah(payslip.earnings[3]?.amount || 0) }}
-              </td>
-              <td class="ps-6 py-2"></td>
-              <td class="py-2 text-end"></td>
+            <tr v-for="(item, index) in record?.items ?? []" :key="index">
+              <td class="py-2">{{ item.amount >= 0 ? item.label : '' }}</td>
+              <td class="py-2 text-right">{{ item.amount >= 0 ? formatRupiah(item.amount) : '' }}</td>
+              <td class="py-2 pl-6">{{ item.amount < 0 ? item.label : '' }}</td>
+              <td class="py-2 text-right">{{ item.amount < 0 ? formatRupiah(-item.amount) : '' }}</td>
             </tr>
           </tbody>
           <tfoot>

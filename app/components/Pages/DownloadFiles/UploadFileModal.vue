@@ -13,6 +13,7 @@ const emit = defineEmits<{
 }>()
 
 interface QueueItem {
+  file: File
   id: string
   name: string
   size: string
@@ -23,40 +24,7 @@ interface QueueItem {
   completed: boolean
 }
 
-const defaultQueue = (): QueueItem[] => [
-  {
-    id: 'q-1',
-    name: 'latest-version.zip',
-    size: '616 MB',
-    fileType: 'archive',
-    icon: '/assets/img/icons/folder.svg',
-    progress: 100,
-    isUploading: false,
-    completed: true,
-  },
-  {
-    id: 'q-2',
-    name: 'Update work history.xls',
-    size: '616 MB',
-    fileType: 'excel',
-    icon: '/assets/img/icons/xls.svg',
-    progress: 75,
-    isUploading: true,
-    completed: false,
-  },
-  {
-    id: 'q-3',
-    name: 'Updated Project.zip',
-    size: '616 MB',
-    fileType: 'archive',
-    icon: '/assets/img/icons/folder.svg',
-    progress: 35,
-    isUploading: false,
-    completed: false,
-  },
-]
-
-const queue = ref<QueueItem[]>(defaultQueue())
+const queue = ref<QueueItem[]>([])
 const isDraggingOver = ref(false)
 const errorMessage = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -83,27 +51,6 @@ function removeItem(id: string) {
   queue.value = queue.value.filter(item => item.id !== id)
 }
 
-function togglePausePlay(item: QueueItem) {
-  item.isUploading = !item.isUploading
-  if (item.isUploading) {
-    const interval = setInterval(() => {
-      if (item.progress >= 100) {
-        item.progress = 100
-        item.completed = true
-        item.isUploading = false
-        clearInterval(interval)
-      } else {
-        item.progress = Math.min(100, item.progress + 20)
-        if (item.progress >= 100) {
-          item.completed = true
-          item.isUploading = false
-          clearInterval(interval)
-        }
-      }
-    }, 350)
-  }
-}
-
 function handleFileSelect(e: Event) {
   const input = e.target as HTMLInputElement
   if (input.files && input.files.length > 0) {
@@ -119,7 +66,9 @@ function handleDrop(e: DragEvent) {
 }
 
 function addFiles(fileList: FileList | File[]) {
-  Array.from(fileList).forEach(file => {
+  Array.from(fileList).slice(0, 1).forEach(file => {
+    if (file.size > 10 * 1024 * 1024) { errorMessage.value = 'Ukuran maksimal 10 MB.'; return }
+    errorMessage.value = ''
     const ext = file.name.split('.').pop()?.toLowerCase() || ''
     let fType: DownloadFileFormData['fileType'] = 'file'
     let icon = '/assets/img/icons/pdf-02.svg'
@@ -145,35 +94,18 @@ function addFiles(fileList: FileList | File[]) {
     const sizeStr = file.size >= 1024 * 1024 ? `${mbSize} MB` : `${Math.max(1, Math.round(file.size / 1024))} KB`
 
     const newItem: QueueItem = {
+      file,
       id: `q-${Date.now()}-${Math.random()}`,
       name: file.name,
       size: sizeStr,
       fileType: fType,
       icon,
       progress: 0,
-      isUploading: true,
+      isUploading: false,
       completed: false,
     }
 
-    queue.value.push(newItem)
-
-    // Simulate progress smoothly
-    const timer = setInterval(() => {
-      if (newItem.progress >= 100) {
-        newItem.progress = 100
-        newItem.completed = true
-        newItem.isUploading = false
-        clearInterval(timer)
-      } else {
-        newItem.progress += 25
-        if (newItem.progress >= 100) {
-          newItem.progress = 100
-          newItem.completed = true
-          newItem.isUploading = false
-          clearInterval(timer)
-        }
-      }
-    }, 250)
+    queue.value = [newItem]
   })
 }
 
@@ -187,6 +119,7 @@ function handleSubmit() {
   const itemToSubmit = queue.value[queue.value.length - 1]
   if (!itemToSubmit) return
   emit('submit', {
+    file: itemToSubmit.file,
     name: itemToSubmit.name,
     category: itemToSubmit.fileType === 'excel' ? 'Excel' : (itemToSubmit.fileType === 'pdf' ? 'PDF' : (itemToSubmit.fileType === 'video' ? 'Videos' : (itemToSubmit.fileType === 'audio' ? 'Audios' : 'General'))),
     size: itemToSubmit.size,
@@ -196,14 +129,8 @@ function handleSubmit() {
   })
 }
 
-watch(() => props.open, (val) => {
-  if (val) {
-    // Reset to default sample queue if empty
-    if (queue.value.length === 0) {
-      queue.value = defaultQueue()
-    }
-    errorMessage.value = ''
-  }
+watch(() => props.open, (open) => {
+  if (open) { queue.value = []; errorMessage.value = '' }
 })
 </script>
 
@@ -250,7 +177,7 @@ watch(() => props.open, (val) => {
           <input
             ref="fileInputRef"
             type="file"
-            multiple
+
             class="hidden"
             @change="handleFileSelect"
           />
@@ -259,7 +186,7 @@ watch(() => props.open, (val) => {
         <!-- Dynamic Upload Status Bar -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 font-medium">
-            <span>{{ counterText }}</span>
+            <span>{{ busy ? 'Mengunggah berkas...' : 'Pilih satu berkas, maksimal 10 MB' }}</span>
             <span class="font-bold text-gray-800 dark:text-gray-200">{{ overallProgress }}%</span>
           </div>
           <!-- Main Progress Bar -->
@@ -301,7 +228,7 @@ watch(() => props.open, (val) => {
                     class="text-emerald-500 shrink-0"
                   />
                 </div>
-                <span class="text-[10px] text-gray-400">{{ item.size }}</span>
+                <span class="text-xs text-gray-400">{{ item.size }}</span>
 
                 <!-- Mini Progress Bar on in-progress file (Matches template) -->
                 <div
@@ -310,7 +237,7 @@ watch(() => props.open, (val) => {
                 >
                   <div
                     class="h-full bg-rose-500 rounded-full transition-all duration-300"
-                    :style="{ width: `${item.progress}%` }"
+                    :class="busy ? 'w-full animate-pulse' : 'w-0'"
                   ></div>
                 </div>
               </div>
@@ -327,18 +254,7 @@ watch(() => props.open, (val) => {
                 <FeatherIcon name="trash-2" :size="14" />
               </button>
 
-              <button
-                v-if="!item.completed && item.progress < 100"
-                type="button"
-                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1 rounded transition"
-                :title="item.isUploading ? 'Jeda upload' : 'Lanjutkan upload'"
-                @click="togglePausePlay(item)"
-              >
-                <FeatherIcon
-                  :name="item.isUploading ? 'pause-circle' : 'play-circle'"
-                  :size="14"
-                />
-              </button>
+              <FeatherIcon v-if="busy" name="loader" :size="16" class="animate-spin" />
             </div>
           </li>
         </ul>

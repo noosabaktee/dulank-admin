@@ -1,8 +1,11 @@
 export interface PayslipItem {
   id: string
+  employeeId: string
   slipNo: string
   name: string
   period: string
+  salarySystem?: 'Monthly' | 'Weekly' | 'Daily' | null
+  department?: string | null
   salaryRate: number
   dayWorked: number
   allowance: number
@@ -10,7 +13,10 @@ export interface PayslipItem {
   deduction: number
   total: number
   status: 'Paid' | 'Unpaid'
-  paidDate: string
+  paidDate: string | null
+  paid?: number
+  due?: number
+  items?: { label: string; qty: number; rate: number; amount: number }[]
 }
 
 export interface PayslipFilterParams {
@@ -19,6 +25,7 @@ export interface PayslipFilterParams {
 }
 
 export interface PayslipFormData {
+  employeeId?: string
   id?: string
   slipNo?: string
   name: string

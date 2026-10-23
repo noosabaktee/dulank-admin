@@ -23,7 +23,14 @@ export function useCashAdvances() {
   const items = computed<CashAdvanceView[]>(() => request.data.value?.data ?? [])
 
   async function save(payload: CashAdvanceFormData) {
-    const { id, ...body } = payload
+    const { id } = payload
+    const body = {
+      employeeId: payload.employeeId || null,
+      employeeName: payload.employeeName || undefined,
+      bankAccountId: payload.bankAccountId || null,
+      date: payload.date, totalCash: payload.totalCash,
+      installmentCount: payload.installmentCount, period: payload.period, note: payload.note,
+    }
 
     const result = await apiFetch<MutationResponse>(
       id ? `/api/v1/admin/cash-advances/${encodeURIComponent(id)}` : '/api/v1/admin/cash-advances',

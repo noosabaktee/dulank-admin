@@ -64,14 +64,15 @@ test('failed CRUD emits error details and still rejects for form error handling'
   assert.equal(notices[0][0], 'Nama wajib diisi.'); assert.equal(notices[0][1], 'error')
 })
 
-async function renderComponent(file, props) {
+async function renderComponent(file, props, imports = {}) {
   const { descriptor } = parse(fs.readFileSync(file, 'utf8'))
   const script = compileScript(descriptor, { id: 'ui-test' })
   const template = compileTemplate({ source: descriptor.template.content, filename: file, id: 'ui-test', ssr: true, ssrCssVars: [], compilerOptions: { bindingMetadata: script.bindings } })
   assert.equal(template.errors.length, 0)
-  const compiled = evaluate(`${script.content}\n${template.code}\nexports.default.ssrRender = exports.ssrRender;`)
+  const compiled = evaluate(`${script.content}\n${template.code}\nexports.default.ssrRender = exports.ssrRender;`, {}, imports)
   const app = Vue.createSSRApp(compiled.default, props)
   app.component('FeatherIcon', { template: '<span />' })
+  app.component('SalesDialog', { template: '<div><slot /></div>' })
   return VueServer.renderToString(app)
 }
 test('member input renders selected names as removable chips without a checkbox list', async () => {
@@ -81,4 +82,32 @@ test('member input renders selected names as removable chips without a checkbox 
 test('photo field renders Employee style preview/remove and hides the native file picker', async () => {
   const html = await renderComponent('app/components/Common/EntityPhotoField.vue', { modelValue: '/storage/photo.jpg' })
   assert.match(html, /rounded-full/); assert.match(html, /Hapus foto/); assert.match(html, /Change Photo/); assert.match(html, /type="file"[^>]*class="hidden"/)
+})
+
+
+const moneyField = { props: ['modelValue', 'readonly', 'disabled'], template: '<input :value="modelValue" :readonly="readonly" :disabled="disabled" />' }
+const formImports = {
+  '~/components/Common/CurrencyInput.vue': { default: moneyField },
+  '~/components/Sales/SalesDialog.vue': { default: { template: '<div><slot /></div>' } },
+  '~/utils/salesUi': {},
+}
+
+test('cash advance edit displays calculated outstanding read-only and preserves saved tenor', async () => {
+  const html = await renderComponent('app/components/Pages/CashAdvance/CashAdvanceFormModal.vue', {
+    open: true, item: { id: '1', employeeId: '9', employee: 'Rani', totalCash: 900000, totalPaid: 300000, installmentCount: 3, payments: [{ id: '1' }], period: 'Monthly', date: '2026-10-23' }, employees: [], accounts: [],
+  }, formImports)
+  assert.match(html, /value="600000"[^>]*readonly/)
+  assert.match(html, /value="900000"[^>]*disabled/)
+  assert.match(html, /value="3"/)
+  assert.match(html, /Otomatis: total kasbon/)
+})
+
+test('expense edit explains cumulative payments and locks the account after payment', async () => {
+  const html = await renderComponent('app/components/Pages/Expense/ExpenseFormDialog.vue', {
+    open: true, item: { id: '2', name: 'Perawatan AC', amount: 600000, paid: 200000, bankAccountId: '3' }, categories: [], bankAccounts: [],
+  }, formImports)
+  assert.match(html, /Total kumulatif/)
+  assert.match(html, /value="200000"/)
+  assert.match(html, /<select[^>]*disabled/)
+  assert.match(html, /Rekening #3/)
 })
