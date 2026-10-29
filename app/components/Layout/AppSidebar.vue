@@ -125,6 +125,7 @@ const menuGroups: MenuGroup[] = [
   {
     header: "CALCULATOR APPS",
     items: [
+      { title: "Master Kertas", icon: "file-text", submenus: [{ title: "Paper Group", to: "/kertas-group-self" }, { title: "Paper Type", to: "/kertas-jenis-self" }, { title: "Paper Size", to: "/kertas-ukuran-self" }, { title: "Paper Price", to: "/kertas-harga-self" }] },
       { title: "All Printing Shop", icon: "copy", to: "/semua-percetakan" },
       {
         title: "All Machine",
@@ -332,6 +333,7 @@ const menuGroups: MenuGroup[] = [
   {
     header: "CONTENT",
     items: [
+      { title: "Konten Kalkulator", icon: "file-text", to: "/merchant-settings#calculator-content" },
       { title: "All Blog", icon: "life-buoy", to: "/all-blog" },
       { title: "Blog Tag", icon: "hash", to: "/blog-tag" },
       { title: "Blog Category", icon: "sliders", to: "/blog-category" },

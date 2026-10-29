@@ -48,7 +48,7 @@ const rows = computed(() => filteredListings.value.map((listing) => {
 
 const stats = computed(() => [
   { label: `Total ${config.value.title.replace(' List', '')}`, value: listings.value.length, icon: props.category.startsWith('paper_') ? 'file' : 'tool' },
-  { label: 'Total Percetakan', value: new Set(listings.value.map(item => item.sourcePartnerId)).size, icon: 'users', tone: 'bg-cyan-50 text-cyan-700' },
+  { label: 'Total Percetakan', value: new Set(listings.value.map(item => item.sourcePartnerId).filter(Boolean)).size, icon: 'users', tone: 'bg-cyan-50 text-cyan-700' },
   { label: 'Total Publish', value: listings.value.filter(item => item.visibility === 'Publish').length, icon: 'eye', tone: 'bg-emerald-50 text-emerald-700' },
   { label: 'Total Private', value: listings.value.filter(item => item.visibility === 'Private').length, icon: 'lock', tone: 'bg-amber-50 text-amber-700' },
 ])
@@ -115,7 +115,7 @@ async function confirmDelete() {
         <template #cell(halfCut)="{ item }"><div class="text-right"><CurrencyDisplay :value="item.halfCutRate" /><p class="text-xs text-gray-500">Min <CurrencyDisplay :value="item.halfCutMinimum" /></p></div></template>
         <template #cell(paperPrice)="{ item }"><div class="text-right"><CurrencyDisplay :value="item.paperPrice" /><p class="text-xs text-gray-500">per {{ item.priceUnit }}</p></div></template>
         <template #cell(statusLabel)="{ item }"><div class="flex flex-col items-center gap-1"><AppBadge :label="item.visibility" :tone="item.visibility === 'Publish' ? 'info' : 'neutral'" /><AppBadge :label="item.status" /></div></template>
-        <template #cell(actions)="{ item }"><div class="flex justify-center gap-1"><SalesActionButton icon="eye" label="View detail" @click="selected = item._record" /><SalesActionButton icon="settings" label="Manage source" @click="manageTarget = item._record" /><SalesActionButton icon="trash-2" label="Delete listing" @click="deleteTarget = item._record" /></div></template>
+        <template #cell(actions)="{ item }"><div class="flex justify-center gap-1"><SalesActionButton icon="eye" label="View detail" @click="selected = item._record" /><SalesActionButton icon="settings" label="Manage source" :disabled="!item._record.sourcePartnerId" @click="manageTarget = item._record" /><SalesActionButton icon="trash-2" label="Delete listing" @click="deleteTarget = item._record" /></div></template>
       </SalesDataTable>
     </template>
 

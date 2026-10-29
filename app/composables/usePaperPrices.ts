@@ -17,8 +17,8 @@ export function usePaperPrices(filterParams?: Ref<PaperPriceFilterParams> | Pape
   const paperPrices = computed<PaperPrice[]>(() => data.value?.data ?? [])
 
   const savePaperPrice = async (payload: PaperPriceFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperPrice; message?: string }>('/api/v1/admin/paper-prices', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperPrice; message?: string }>(payload.id ? `/api/v1/admin/paper-prices/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-prices', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

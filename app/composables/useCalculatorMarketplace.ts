@@ -44,7 +44,10 @@ export function useCalculatorListings(category: CalculatorListingCategory) {
   const listings = computed(() => data.value?.data ?? [])
 
   async function deleteListing(id: string) {
-    const response = await apiFetch<ApiResponse<CalculatorListingRow>>(`/api/v1/admin/calculator/listings/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    const paperResources: Partial<Record<CalculatorListingCategory, string>> = { paper_group: 'paper-groups', paper_size: 'paper-sizes', paper_type: 'paper-items', paper_price: 'paper-prices' }
+    const resource = paperResources[category]
+    const endpoint = resource ? `/api/v1/admin/${resource}/${encodeURIComponent(id)}` : `/api/v1/admin/calculator/listings/${encodeURIComponent(id)}`
+    const response = await apiFetch<ApiResponse<CalculatorListingRow>>(endpoint, { method: 'DELETE' })
     await refresh()
     return response
   }

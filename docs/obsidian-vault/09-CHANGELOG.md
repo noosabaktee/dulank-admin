@@ -1,4 +1,24 @@
 ---
+
+### Revisi kesatuan master kertas - 28 Oktober 2026
+
+Halaman marketplace `/kertas-group`, `/kertas-ukuran`, `/kertas-jenis`, `/kertas-harga` sekarang menerima row canonical paper_* dari PaperMarketplaceService (calculator/listings?category), bukan salinan tabel listings. Tabel/detail/filter/print existing dipertahankan. Delete memilih endpoint master sesuai kategori dan guard FK; manage-source platform tanpa partner dinonaktifkan. Page -> CalculatorListingsPage -> useCalculatorListings -> proxy -> CalculatorController/PaperMarketplaceService -> master Eloquent; UI Responsibility tetap tabel/filter/detail/dialog existing. Partial BRVS / implemented/API-tested, bukan approved baseline.
+
+Database lokal sudah berisi 2 grup, 2 jenis, 3 ukuran, 4 harga; label ? sudah diperbaiki via command dengan provenance/backup. Wilayah front store memakai ID API dan 5.927 kecamatan ditambahkan dari referensi kode pos existing. Toast front store mengikuti desain toast admin; toast admin sendiri tidak diubah. Detail eksekusi/backup di DONE.md bagian 16.
+
+Evidence: backend 281 tes/5.177 assertions PASS, 18 Node admin, 10 Node store, kedua typecheck/build, Pint, validators PASS. Browser desktop admin harga setelah reload menampilkan 4 record dengan nama x; Computer Use berhenti saat membuka tab baru karena URL tidak dapat dipastikan. UAT front store/mobile/visual toast pending. Backend/admin Rama, storefront main; NOT COMMITTED / NOT PUSHED. Tidak ada Product/order/hosting berubah.
+
+
+### Integrasi merchant B2B dan kalkulator - 28 Oktober 2026
+
+Admin `/merchant-settings` menambah pengaturan langganan B2B manual, periode, hak fitur, publikasi/freeze serta konten judul/pengantar kalkulator. Menu Content -> Konten Kalkulator menuju anchor pengaturan yang sama. Master `/kertas-group-self`, `/kertas-jenis-self`, `/kertas-ukuran-self`, `/kertas-harga-self` memakai relasi kelompok/jenis/ukuran/pemilik dan PUT by ID; backend melindungi referensi terpakai. Storefront profil/potong/berat memakai database yang sama dan pemeriksaan langganan/owner server. Tidak membuat data Product atau gateway pembayaran.
+
+Architecture Evidence: page -> komponen/form -> useMerchantIntegration/usePaper*Self/usePaperReferences/usePaperMerchants -> API client/proxy -> Laravel permission/controller/service/Eloquent. UI Responsibility: Workspace baru merangkai SubscriptionForm, publikasi dan ContentForm; master memakai SalesDialog/CurrencyInput serta toast bersama. Struktur backend Laravel merupakan target domain bersama, bukan persistensi JSON lokal. Status partial BRVS / implemented/API-tested; visual approval pending.
+
+Evidence PASS: backend penuh 277 tes/5.138 assertions, target akhir 19/1.915, Pint; admin 17 Node tests, kedua Nuxt typecheck/build; admin structure 1.220 original files, hashesChecked=false; storefront 4 Node tests, migration/revision3 validator. Seeder hanya dijalankan pada SQLite UAT terpisah; smoke HTTP/SSR melalui proxy storefront berhasil. Computer Use dihentikan karena URL Chrome tidak dapat dipastikan; UAT desktop/mobile/console dan parity visual admin belum terbukti, sumber admin legacy tidak tersedia.
+
+Rincian route, akun, schema, perintah dan batas ada di [kontrak B2B](../../../dulank-nuxt/docs/MERCHANT_B2B.md), [DONE](../../../DONE.md) bagian 13 dan [TO-DO](../../../TO-DO.md). Database kerja belum dimigrasi/disemai; mapping owner lama, pembayaran otomatis dan order B2B tetap lanjutan. Backend/admin branch Rama; storefront main. NOT COMMITTED / NOT PUSHED.
+
 title: Documentation Changelog
 tags: [changelog]
 updated: 2026-10-23
