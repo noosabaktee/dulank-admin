@@ -19,11 +19,11 @@ export function usePaperSizesSelf(filterParams?: Ref<PaperSizeFilterParams> | Pa
   })
 
   const sizes = computed<PaperSize[]>(() => data.value?.data ?? [])
-  const stats = computed(() => data.value?.stats ?? { total: 0, active: 0, deactive: 0 })
+  const stats = computed(() => ({ total: sizes.value.length, active: sizes.value.filter(row => row.status === 'Active').length, deactive: sizes.value.filter(row => row.status !== 'Active').length }))
 
   const saveSize = async (payload: PaperSizeFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperSize; message?: string }>('/api/v1/admin/paper-sizes', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperSize; message?: string }>(payload.id ? `/api/v1/admin/paper-sizes/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-sizes', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

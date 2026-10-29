@@ -1,5 +1,6 @@
 export interface PaperGroup {
   id: string
+  partnerId?: string | null
   name: string
   merk: string
   priceType: 'Yes' | 'No'
@@ -14,6 +15,7 @@ export interface PaperGroupFilterParams {
 
 export interface PaperGroupFormData {
   id?: string
+  partnerId?: string | null
   name: string
   merk: string
   priceType: 'Yes' | 'No'
@@ -87,6 +89,7 @@ export interface PaperItemFormData {
 
 export interface PaperPrice {
   id: string
+  sizeId?: string
   paperId?: string
   groupId?: string
   nama: string
@@ -110,6 +113,7 @@ export interface PaperPriceFilterParams {
 
 export interface PaperPriceFormData {
   id?: string
+  sizeId?: string
   paperId?: string
   groupId?: string
   nama: string

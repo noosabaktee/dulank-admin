@@ -17,8 +17,8 @@ export function usePaperSizes(filterParams?: Ref<PaperSizeFilterParams> | PaperS
   const paperSizes = computed<PaperSize[]>(() => data.value?.data ?? [])
 
   const savePaperSize = async (payload: PaperSizeFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperSize; message?: string }>('/api/v1/admin/paper-sizes', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperSize; message?: string }>(payload.id ? `/api/v1/admin/paper-sizes/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-sizes', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

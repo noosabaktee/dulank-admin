@@ -12,7 +12,7 @@ function harness(file, records = []) {
   const context = { exports: {}, ...Vue, FormData, File,
     useApiFetch: (url, options) => { calls.push({ read: url, options }); return { data: Vue.ref({ data: records }), pending: Vue.ref(false), error: Vue.ref(null), refresh: async () => { refreshes++ } } },
     apiFetch: async (url, options) => { calls.push({ url, ...options }); return { success: true, data: {} } },
-    require: () => { throw new Error('Unexpected runtime import') }
+    require: name => { if (name === '~/utils/calculatorPartner') return { normalizeCalculatorPartner: row => row }; throw new Error('Unexpected runtime import') }
   }
   vm.runInNewContext(code, context)
   return { exports: context.exports, calls, refreshes: () => refreshes }
@@ -100,4 +100,33 @@ test('expense edits preserve the cumulative paid input and omit derived due and 
   assert.equal('status' in edit.body, false)
   assert.equal('due' in edit.body, false)
   assert.equal(h.refreshes(), 1)
+})
+
+
+test('paper master edit requests update the selected ID instead of creating duplicates', async () => {
+  for (const [file, factory, save, route] of [
+    ['usePaperGroupsSelf.ts', 'usePaperGroupsSelf', 'saveGroup', 'paper-groups'],
+    ['usePaperSizesSelf.ts', 'usePaperSizesSelf', 'saveSize', 'paper-sizes'],
+    ['usePaperItemsSelf.ts', 'usePaperItemsSelf', 'saveItem', 'paper-items'],
+    ['usePaperPricesSelf.ts', 'usePaperPricesSelf', 'savePrice', 'paper-prices'],
+  ]) {
+    const h = harness(`app/composables/${file}`)
+    await h.exports[factory]()[save]({ id: '17', name: 'Ukuran aktual' })
+    const mutation = h.calls.find(item => item.method === 'PUT')
+    assert.equal(mutation.url, `/api/v1/admin/${route}/17`)
+    assert.equal(h.calls.some(item => item.method === 'POST'), false)
+    assert.equal(h.refreshes(), 1)
+  }
+})
+
+
+test('paper marketplace delete targets the canonical master and preserves the machine listing endpoint', async () => {
+ for (const [category, resource] of [['paper_group','paper-groups'], ['paper_size','paper-sizes'], ['paper_type','paper-items'], ['paper_price','paper-prices'], ['offset','calculator/listings']]) {
+  const h = harness('app/composables/useCalculatorMarketplace.ts')
+  const api = h.exports.useCalculatorListings(category)
+  await api.deleteListing('17')
+  assert.equal(h.calls.find(call => call.method === 'DELETE').url, `/api/v1/admin/${resource}/17`)
+  assert.equal(h.calls[0].options.query.category, category)
+  assert.equal(h.refreshes(),1)
+ }
 })

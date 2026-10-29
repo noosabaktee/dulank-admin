@@ -14,7 +14,9 @@ const emit = defineEmits<{
   (e: 'submit', payload: PaperGroupFormData): void
 }>()
 
+const merchants = usePaperMerchants()
 const form = ref<PaperGroupFormData>({
+  partnerId: '',
   name: '',
   merk: '',
   priceType: 'Yes',
@@ -27,6 +29,7 @@ watch(
     if (val) {
       form.value = {
         id: val.id,
+        partnerId: val.partnerId ?? '',
         name: val.name,
         merk: val.merk,
         priceType: val.priceType,
@@ -34,6 +37,7 @@ watch(
       }
     } else {
       form.value = {
+        partnerId: '',
         name: '',
         merk: '',
         priceType: 'Yes',
@@ -57,7 +61,7 @@ function handleSubmit() {
     size="md"
     @close="emit('close')"
   >
-    <form @submit.prevent="handleSubmit" class="space-y-4">
+    <form @submit.prevent="handleSubmit" class="space-y-4"><div :class="modalFormRowClass"><label :class="modalFormLabelClass">Pemilik Katalog</label><div :class="modalFormInputColClass"><select v-model="form.partnerId" :class="formControlClass"><option value="">Master Platform Dulank</option><option v-for="merchant in merchants" :key="merchant.id" :value="String(merchant.id)">{{ merchant.name }}</option></select><p class="mt-1 text-xs text-gray-500">Pemilik tidak dapat diganti setelah grup memiliki jenis/harga terkait.</p></div></div>
       <div :class="modalFormRowClass">
         <label :class="modalFormLabelClass">Paper Group Name <span class="text-rose-500">*</span></label>
         <div :class="modalFormInputColClass">

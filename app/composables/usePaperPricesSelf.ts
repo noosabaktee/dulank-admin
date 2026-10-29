@@ -20,11 +20,11 @@ export function usePaperPricesSelf(filterParams?: Ref<PaperPriceFilterParams> | 
   })
 
   const prices = computed<PaperPrice[]>(() => data.value?.data ?? [])
-  const stats = computed(() => data.value?.stats ?? { total: 0, totalGroups: 0, active: 0, deactive: 0 })
+  const stats = computed(() => ({ total: prices.value.length, totalGroups: new Set(prices.value.map(row => row.groupId)).size, active: prices.value.filter(row => row.status === 'Active').length, deactive: prices.value.filter(row => row.status !== 'Active').length }))
 
   const savePrice = async (payload: PaperPriceFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperPrice; message?: string }>('/api/v1/admin/paper-prices', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperPrice; message?: string }>(payload.id ? `/api/v1/admin/paper-prices/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-prices', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

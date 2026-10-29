@@ -19,11 +19,11 @@ export function usePaperGroupsSelf(filterParams?: Ref<PaperGroupFilterParams> | 
   })
 
   const groups = computed<PaperGroup[]>(() => data.value?.data ?? [])
-  const stats = computed(() => data.value?.stats ?? { total: 0, active: 0, deactive: 0 })
+  const stats = computed(() => ({ total: groups.value.length, active: groups.value.filter(row => row.status === 'Active').length, deactive: groups.value.filter(row => row.status !== 'Active').length }))
 
   const saveGroup = async (payload: PaperGroupFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperGroup; message?: string }>('/api/v1/admin/paper-groups', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperGroup; message?: string }>(payload.id ? `/api/v1/admin/paper-groups/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-groups', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

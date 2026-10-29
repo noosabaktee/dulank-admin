@@ -1,5 +1,6 @@
 export interface PaperPrice {
   id: string
+  sizeId?: string
   nama: string
   group: string
   merk: string
@@ -21,6 +22,7 @@ export interface PaperPriceFilterParams {
 
 export interface PaperPriceFormData {
   id?: string
+  sizeId?: string
   nama: string
   group: string
   merk: string

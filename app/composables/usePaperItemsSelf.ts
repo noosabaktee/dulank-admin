@@ -20,11 +20,11 @@ export function usePaperItemsSelf(filterParams?: Ref<PaperItemFilterParams> | Pa
   })
 
   const items = computed<PaperItem[]>(() => data.value?.data ?? [])
-  const stats = computed(() => data.value?.stats ?? { total: 0, totalGroups: 0, active: 0, deactive: 0 })
+  const stats = computed(() => ({ total: items.value.length, totalGroups: new Set(items.value.map(row => row.groupId)).size, active: items.value.filter(row => row.status === 'Active').length, deactive: items.value.filter(row => row.status !== 'Active').length }))
 
   const saveItem = async (payload: PaperItemFormData) => {
-    const res = await apiFetch<{ success: boolean; data: PaperItem; message?: string }>('/api/v1/admin/paper-items', {
-      method: 'POST',
+    const res = await apiFetch<{ success: boolean; data: PaperItem; message?: string }>(payload.id ? `/api/v1/admin/paper-items/${encodeURIComponent(payload.id)}` : '/api/v1/admin/paper-items', {
+      method: payload.id ? 'PUT' : 'POST',
       body: payload
     })
     await refresh()

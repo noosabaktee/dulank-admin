@@ -25,7 +25,7 @@ const form = ref<PaperItemFormData>({
   priceType: 'Group',
   unitPrice: 'Kg',
   gsm: 150,
-  paperSize: 'Plano 65 x 100',
+  sizeId: '', paperSize: '',
   stock: 1000,
   unitStock: 'Lembar',
   status: 'Active'
@@ -59,7 +59,7 @@ watch(
         priceType: 'Group',
         unitPrice: 'Kg',
         gsm: 150,
-        paperSize: 'Plano 65 x 100',
+        sizeId: '', paperSize: '',
         stock: 1000,
         unitStock: 'Lembar',
         status: 'Active'
@@ -144,8 +144,8 @@ function handleSubmit() {
       <div :class="modalFormRowClass">
         <label :class="modalFormLabelClass">Paper Size</label>
         <div :class="modalFormInputColClass">
-          <select v-if="sizes && sizes.length > 0" v-model="form.paperSize" :class="formControlClass">
-            <option v-for="s in sizes" :key="s.id" :value="`${s.name} (${s.dimension} ${s.unit})`">
+          <select v-if="sizes && sizes.length > 0" v-model="form.sizeId" :class="formControlClass">
+            <option v-for="s in sizes" :key="s.id" :value="s.id">
               {{ s.name }} ({{ s.dimension }} {{ s.unit }})
             </option>
           </select>
